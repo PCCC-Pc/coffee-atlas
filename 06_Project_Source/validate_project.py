@@ -42,9 +42,9 @@ for rel in ("01_Wiki/index.html", "02_HTML_Magazine/index.html"):
     for ref in parser.refs:
         target = (page.parent / ref.split("#")[0].split("?")[0]).resolve()
         assert target.exists(), f"{rel} 找不到資源：{ref}"
-    blocks = re.findall(r"<script\\b[^>]*>(.*?)</script>", text, re.S | re.I)
+    blocks = re.findall(r"<script\b[^>]*>(.*?)</script>", text, re.S | re.I)
     assert len(blocks) == 1, f"{rel} script 區塊數量異常"
-    assert len(re.findall(r"<script\\b", text, re.I)) == len(re.findall(r"</script>", text, re.I))
+    assert len(re.findall(r"<script\b", text, re.I)) == len(re.findall(r"</script>", text, re.I))
     node = subprocess.run(["node", "--check", "-"], input=blocks[0], text=True, capture_output=True)
     assert node.returncode == 0, f"{rel} JavaScript 語法錯誤：{node.stderr}"
 
