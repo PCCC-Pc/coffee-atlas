@@ -38,6 +38,10 @@ def extract_array(source, variable):
 
 wiki = read("01_Wiki/index.html")
 mag = read("02_HTML_Magazine/index.html")
+hero = wiki.split('<section class="hero">', 1)[1].split("</section>", 1)[0]
+assert '{"id"' not in hero and '"summary":' not in hero and '"body":' not in hero, "首頁 Hero 區塊不應顯示原始 JSON"
+for badge in ('5 VOL.', '11 CHAPTERS', '15 SOURCES', 'APA 7TH'):
+    assert badge in hero, f"首頁缺少統計標籤：{badge}"
 books = load("01_Wiki/books.json")
 chapters = extract_array(wiki, "chapters")
 html_books = extract_array(wiki, "books")
