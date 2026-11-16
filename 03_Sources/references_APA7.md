@@ -20,7 +20,7 @@ Shen, X., Zi, C., Yang, Y., Wang, Q., Zhang, Z., Shao, J., Zhao, P., Liu, K., Li
 
 **A4｜學術研究**
 
-Cordoba Castro, N. M., Fernandez Alduenda, M. R., Moreno Moreno, F. L., & Ruiz Pardo, R. Y. (2020). Coffee extraction: A review of parameters and their influence on the physicochemical characteristics and flavour of coffee brews. *Trends in Food Science & Technology, 96, 45–60*. https://doi.org/10.1016/j.tifs.2019.12.004
+Cordoba Castro, N. M., Ruiz Pardo, R. Y., Moreno Moreno, F. L., & Fernandez Alduenda, M. R. (2020). Coffee extraction: A review of parameters and their influence on the physicochemical characteristics and flavour of coffee brews. *Trends in Food Science & Technology, 96, 45–60*. https://doi.org/10.1016/j.tifs.2019.12.004
 
 使用主題：萃取、研磨、水溫、壓力與沖煮變因
 
