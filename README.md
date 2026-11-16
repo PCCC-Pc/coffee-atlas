@@ -1,18 +1,23 @@
-# Coffee_Atlas
+# Coffee Atlas｜咖啡世界圖鑑
 
-Coffee knowledge-base project.
+本 Repository 是獨立的咖啡知識庫專案。包含五冊知識筆記、互動式 Wiki、30 頁 HTML 教學雜誌、參考來源、Graph＋Loop 流程及作業報告。
 
-> Initial repository bootstrap. Project assets and source files are being reviewed locally before import.
+## 專案狀態
+- Wiki：原始版本已檢查並發現 JavaScript 標籤與首頁內容輸出問題；本地修正版已完成靜態檢查。
+- 靜態檢查：五冊、11 章、30 頁教學內容、15 筆來源；JSON、HTML 資源路徑與 JavaScript 語法檢查通過。
+- 真實瀏覽器操作：尚未完成，請勿將其視為通過。
 
-## Project areas
+## 預計目錄
+- `01_Wiki/`：五冊 Markdown 與 Wiki HTML。
+- `02_HTML_Magazine/`：30 頁教學雜誌 HTML。
+- `03_Sources/`：來源登錄及 APA 7th。
+- `04_Workflow/`：Graph＋Loop 與驗證紀錄。
+- `05_Report/`：Word／PDF 報告與預覽圖。
+- `06_Project_Source/`：內容模型、原始程式及驗證腳本。
 
-- `01_Wiki/` — Markdown knowledge base and HTML reader
-- `02_HTML_Magazine/` — 30-page HTML coffee magazine
-- `03_Sources/` — source register and APA 7 references
-- `04_Workflow/` — Graph + Loop design and validation log
-- `05_Report/` — DOCX/PDF course report and previews
-- `06_Project_Source/` — project source code and validation scripts
+## 本地驗證
+```bash
+python 06_Project_Source/validate_project.py
+```
 
-## Current review note
-
-The local review found a defect in `01_Wiki/index.html`: a nested `<script>` opening tag appears inside the JavaScript block. This must be removed before the project is considered ready. This repository bootstrap does not yet contain the complete project payload.
+此腳本進行靜態檢查，不取代 Chrome／Edge 的真實互動測試。
