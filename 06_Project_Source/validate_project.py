@@ -1,6 +1,6 @@
 from pathlib import Path
 from html.parser import HTMLParser
-import json, re, subprocess, sys
+import json, re, subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -17,21 +17,69 @@ class RefParser(HTMLParser):
             if value and not value.startswith(("http:", "https:", "mailto:", "#", "data:", "javascript:")):
                 self.refs.append(value)
 
+def read(rel):
+    return (ROOT / rel).read_text(encoding="utf-8")
+
 def load(rel):
-    return json.loads((ROOT / rel).read_text(encoding="utf-8"))
+    return json.loads(read(rel))
 
+def extract_array(source, variable):
+    match = re.search(r"\\b" + re.escape(variable) + r"\\s*=\\s*\\[", source)
+    assert match, f"HTML 內找不到資料陣列：{variable}"
+    start = source.find("[", match.start())
+    depth, quoted, escaped = 0, False, False
+    for i in range(start, len(source)):
+        ch = source[i]
+        if quoted:
+            if escaped:
+                escaped = False
+            elif ch == "\\\\":
+                escaped = True
+            elif ch == '"':
+                quoted = False
+            continue
+        if ch == '"':
+            quoted = True
+        elif ch == "[":
+            depth += 1
+        elif ch == "]":
+            depth -= 1
+            if depth == 0:
+                return json.loads(source[start:i + 1])
+    raise AssertionError(f"資料陣列未閉合：{variable}")
+
+wiki = read("01_Wiki/index.html")
+mag = read("02_HTML_Magazine/index.html")
 books = load("01_Wiki/books.json")
-sources = load("03_Sources/source_register.json")
-assert len(books) == 5, "Wiki 分冊不是五冊"
-assert len(sources) == 15, "來源數量不是 15 筆"
-assert sum(x["type"] == "學術研究" for x in sources) == 8
-assert sum(x["type"].startswith("官方") for x in sources) == 5
-assert sum(x["type"] == "專業產業資料" for x in sources) == 2
-assert len(list((ROOT / "01_Wiki/books").glob("VOL_*.md"))) == 5
+chapters = extract_array(wiki, "chapters")
+html_books = extract_array(wiki, "books")
+html_sources = extract_array(wiki, "sources")
+slides = extract_array(mag, "slides")
+source_register = load("03_Sources/source_register.json")
 
-refs = (ROOT / "03_Sources/references_APA7.md").read_text(encoding="utf-8")
+assert (len(books), len(html_books), len(chapters), len(slides), len(source_register)) == (5, 5, 11, 32, 15), "冊數／章節／頁數／來源數量不符合規格"
+assert books == html_books, "books.json 與 Wiki 內嵌資料不一致"
+assert {x["id"] for x in html_sources} == {x["id"] for x in source_register}, "Wiki 來源與來源登錄 ID 不一致"
+assert sum(x["type"] == "學術研究" for x in source_register) == 8
+assert sum(x["type"].startswith("官方") for x in source_register) == 5
+assert sum(x["type"] == "專業產業資料" for x in source_register) == 2
+source_ids = {x["id"] for x in source_register}
+markdown_files = list((ROOT / "01_Wiki/books").glob("VOL_*.md"))
+assert len(markdown_files) == 5, "Markdown 分冊數量不是五冊"
+
+for chapter in chapters:
+    assert chapter["sources"] and set(chapter["sources"]).issubset(source_ids), f"章節 {chapter['id']} 來源 ID 不存在"
+    assert chapter["body"].strip(), f"章節 {chapter['id']} 缺少正文"
+    found = []
+    for md in markdown_files:
+        text = md.read_text(encoding="utf-8")
+        if chapter["body"].strip() in text:
+            found.append(text)
+    assert len(found) == 1, f"章節 {chapter['id']} Markdown 正文不存在或重複"
+
+refs = read("03_Sources/references_APA7.md")
 a4 = "Cordoba Castro, N. M., Ruiz Pardo, R. Y., Moreno Moreno, F. L., & Fernandez Alduenda, M. R."
-assert a4 in refs, "A4 作者順序需核對"
+assert a4 in refs, "A4 APA 作者順序不正確"
 
 for rel in ("01_Wiki/index.html", "02_HTML_Magazine/index.html"):
     page = ROOT / rel
@@ -41,23 +89,25 @@ for rel in ("01_Wiki/index.html", "02_HTML_Magazine/index.html"):
     assert len(parser.ids) == len(set(parser.ids)), f"{rel} 有重複 id"
     for ref in parser.refs:
         target = (page.parent / ref.split("#")[0].split("?")[0]).resolve()
-        assert target.exists(), f"{rel} 找不到資源：{ref}"
-    blocks = re.findall(r"<script\b[^>]*>(.*?)</script>", text, re.S | re.I)
-    assert len(blocks) == 1, f"{rel} script 區塊數量異常"
-    assert len(re.findall(r"<script\b", text, re.I)) == len(re.findall(r"</script>", text, re.I))
-    node = subprocess.run(["node", "--check", "-"], input=blocks[0], text=True, capture_output=True)
+        assert target.exists(), f"{rel} 找不到 HTML 資源：{ref}"
+    css_urls = re.findall(r"url\\(['\\"]?([^'\\")]+)", text)
+    for ref in css_urls:
+        if not ref.startswith(("http:", "https:", "data:")):
+            target = (page.parent / ref).resolve()
+            assert target.exists(), f"{rel} 找不到 CSS 資源：{ref}"
+    scripts = re.findall(r"<script\\b[^>]*>(.*?)</script>", text, re.S | re.I)
+    assert len(scripts) == 1, f"{rel} script 區塊數量異常"
+    assert len(re.findall(r"<script\\b", text, re.I)) == len(re.findall(r"</script>", text, re.I))
+    node = subprocess.run(["node", "--check", "-"], input=scripts[0], text=True, capture_output=True)
     assert node.returncode == 0, f"{rel} JavaScript 語法錯誤：{node.stderr}"
 
-wiki = (ROOT / "01_Wiki/index.html").read_text(encoding="utf-8")
-mag = (ROOT / "02_HTML_Magazine/index.html").read_text(encoding="utf-8")
-assets = ("coffee_atlas_hero.svg", "processing_methods.svg", "flavor_wheel.svg", "brewing_steps.svg")
-for name in assets:
-    assert (ROOT / "01_Wiki/assets" / name).exists(), f"缺少 SVG：{name}"
-assert "assets/coffee_atlas_hero.svg" in wiki
-assert "../01_Wiki/assets/coffee_atlas_hero.svg" in mag
-assert "coffee_atlas_hero.png" not in mag
-print("PASS：五冊 Markdown、11 個章節結構、15 筆來源（8+5+2）。")
-print("PASS：Wiki／雜誌 HTML 本地資源、重複 id 與 script 標籤。")
-print("PASS：Node.js 內嵌 JavaScript 語法檢查。")
-print("PASS：4 個 SVG 圖像路徑與 A4 APA 作者排序。")
-print("NOTE：此為靜態驗證；搜尋、收藏、滾輪、圖片放大、列印與全螢幕仍需在真實瀏覽器操作。")
+for asset in ("coffee_atlas_hero.svg", "processing_methods.svg", "flavor_wheel.svg", "brewing_steps.svg"):
+    assert (ROOT / "01_Wiki/assets" / asset).exists(), f"缺少 SVG 素材：{asset}"
+assert "coffee_atlas_hero.png" not in mag, "雜誌仍引用不存在的舊 PNG"
+assert "115213518" not in read("06_Project_Source/project_spec.md"), "公開規格不應包含學號"
+
+print("PASS：五冊、11 章、32 頁（封面＋目錄＋30 頁教學）、15 筆來源（8＋5＋2）。")
+print("PASS：Wiki 內嵌資料、books.json、五冊 Markdown 與來源 ID 對應。")
+print("PASS：APA 7 A4 作者排序、四個 SVG、HTML／CSS 本地資源路徑。")
+print("PASS：HTML ID、script 標籤與 Node.js JavaScript 語法檢查。")
+print("NOTE：此為靜態檢查；localStorage、剪貼簿、滾輪、側欄、圖片放大與全螢幕仍需真實瀏覽器人工測試。")
