@@ -3,7 +3,7 @@
 最後更新：2026-11-16
 
 ## 本次已確認的修正
-1. Wiki 首頁曾將章節 JSON 當成一般文字顯示；目前 Wiki 主頁的資料位於 script 區塊，GitHub 檔案 script 開閉標籤各一組。
+1. Wiki 首頁曾將整份章節 JSON 誤放在 Hero 統計標籤內，造成首頁顯示大量原始 JSON；已移除錯誤內容，恢復「5 VOL.／11 CHAPTERS／15 SOURCES／APA 7TH」四個標籤。Wiki 主頁資料仍保留於 script 區塊，script 開閉標籤各一組。
 2. Wiki 首頁 Hero 主視覺路徑與原始圖片副檔名不一致；已統一改用 Repository 內的 `01_Wiki/assets/coffee_atlas_hero.svg`。
 3. HTML 雜誌封面 CSS 背景與內頁圖片曾引用不存在的 PNG／WebP；已改為 `../01_Wiki/assets/coffee_atlas_hero.svg`。
 4. 補入並追蹤四個 SVG：coffee_atlas_hero、processing_methods、flavor_wheel、brewing_steps。
@@ -14,6 +14,7 @@
 
 ## GitHub 遠端靜態檢查（2026-11-16）
 - Wiki 與雜誌的 script 開啟／關閉標籤數量：均為 1／1。
+- Wiki Hero 統計標籤不再包含原始 JSON，並新增自動回歸檢查。
 - Wiki Hero SVG 路徑：存在。
 - Wiki 三個章節圖像 SVG：存在。
 - 雜誌封面 CSS 背景及內頁圖片路徑：均指向已追蹤 SVG。
